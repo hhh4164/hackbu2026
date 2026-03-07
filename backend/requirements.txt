@@ -1,0 +1,7 @@
+pymupdf4llm
+pymupdf-layout
+ftfy
+sumy
+nltk
+google-genai
+python-dotenv

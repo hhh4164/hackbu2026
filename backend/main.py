@@ -1,24 +1,41 @@
-import pymupdf
+import pymupdf.layout
+import pymupdf4llm
+import pathlib
+import ftfy
+import os
+from dotenv import load_dotenv
 from google import genai
 
-def get_text(file):
-    try:
-        doc = pymupdf.open(file)
-        text = ""
-        for page in doc:
-            text+=page.get_text()
-        doc.close()
-        return text
-    except Exception as e:
-        return f"Error: {e}"
-
-extracted = get_text("backend/sample.pdf")
+from sumy.summarizers.lsa import LsaSummarizer
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.parsers.plaintext import PlaintextParser
 
 
-client = genai.Client()
-
-response = client.models.generate_content(
-    model = "gemini-3-flash-preview",
-   contents = "test"
+input = "backend/sample.pdf"
+#input -> md
+md_text = pymupdf4llm.to_markdown(
+    input, 
+    show_progress = False, 
+    write_images=False,
+    use_ocr=False
 )
+#clean
+fixed = ftfy.fix_text(md_text)
 
+parser = PlaintextParser.from_string(fixed, Tokenizer("english"))
+summarize = LsaSummarizer()
+summary_sentences = summarize(parser.document, 10)
+final = "".join([str(sentence) for sentence in summary_sentences])
+print(final)
+
+
+#gemini
+load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
+#client = genai.Client(api_key = api_key)
+
+#response = client.models.generate_content(
+#    model = "gemini-3-flash-preview",
+#   contents = "whats the weather like today?"
+#)
+#print(response.text)
