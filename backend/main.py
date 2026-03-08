@@ -25,7 +25,7 @@ app = FastAPI()
 
 # configure cors
 origins = [
-    "https://cleardocs.onrender.com"
+    "http://localhost:3000"
 ]
 
 app.add_middleware(
