@@ -1,12 +1,16 @@
 import { useState, type ChangeEvent } from "react"
 import Card from "../components/Card"
-import ResultCard from "../components/ResultCard"
 
 export default function Home() {
   const [docType, setDocType] = useState("")
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{flag: string; solution: string; quote: string}[]>([]) 
+const [result, setResult] = useState<{
+  filename: string;
+  summary: string;
+  gemini_response: {flag: string; solution: string; quote: string}[];
+  pdf_url: string
+} | null>(null)
 
   const handleFileChange = (e : ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files 
@@ -39,7 +43,8 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setResult(data) // an array of json
+      console.log(data)
+      setResult(data || []) // an array of json
     } catch (err) {
       console.error(err)
     }
@@ -104,21 +109,28 @@ export default function Home() {
           </button>
         </div>
 
-        {result.length > 0 && (
+        {result != null && (
           <div className="w-full max-w-4xl mt-10">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Analysis Results</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {result.map((item, index) => (
-              <div key={index} className="space-y-4">
-                <ResultCard 
+            <h3>File: {result.filename}</h3>
+            <p>Summary: {result.summary}</p>
+            <a 
+            href={`http://127.0.0.1:8000${result.pdf_url}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-6 mb-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition inline-block"
+            >
+              Download Annotated PDF
+            </a>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+              {result.gemini_response.map((item, index) => (
+                <Card
                 key={index}
-                flag={item.flag}
-                solution={item.solution}
-                quote={item.quote}
+                message={item.flag}
+                description={item.solution}
                 />
-              </div> 
-            ))}
+              ))
+              }
             </div>
           </div>
         )}
