@@ -1,11 +1,12 @@
 import { useState, type ChangeEvent } from "react"
 import Card from "../components/Card"
+import ResultCard from "../components/ResultCard"
 
 export default function Home() {
   const [docType, setDocType] = useState("")
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{issue: string; description: string}[][]>([])
+  const [result, setResult] = useState<{flag: string; solution: string; quote: string}[]>([]) 
 
   const handleFileChange = (e : ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files 
@@ -38,7 +39,7 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setResult(data)
+      setResult(data) // an array of json
     } catch (err) {
       console.error(err)
     }
@@ -108,14 +109,16 @@ export default function Home() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Analysis Results</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {result.map((group, i) => 
-              group.map((item, j) => (
-                <Card
-                key={`${i}-${j}`}
-                message={item.issue}
-                description={item.description}
+              {result.map((item, index) => (
+              <div key={index} className="space-y-4">
+                <ResultCard 
+                key={index}
+                flag={item.flag}
+                solution={item.solution}
+                quote={item.quote}
                 />
-              )))}
+              </div> 
+            ))}
             </div>
           </div>
         )}
