@@ -6,5 +6,6 @@ nltk
 google-genai
 python-dotenv
 fastapi[standard]
-oython-multipart
+python-multipart
 uvicorn
+scrubadub
