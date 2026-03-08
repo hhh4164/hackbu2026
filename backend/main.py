@@ -52,19 +52,20 @@ async def audit(file: UploadFile = File(...)):
 
         #gemini
         prompt = ("You are a neutral legal auditor focusing on contract risks. Analyze the following summary "
-                  "and identify major red flags. For each risk, you MUST find direct, verbatim quote from text"
+                  "and identify major red flags. First, generate a concise and short summary in a couple sentences of the costs and purpose of the contract. Append this summary with '~'"
+                  "Secondly, For each risk, you MUST find direct, verbatim quote from text"
                   "to serve as evidence."
                   "STRICT OUTPUT FORMAT:"
                   "Problem ; Recommended Solution ; Direct Quote \n"
                   "Separate each risk block with pipe '|'"
                   "EXAMPLE: \n"
-                  "Automatic Renewal ; Negotiate 30-day notice ; This agreement automatically renews"
+                  "This is a standard agreement for consulting. It is fair on payment terms ~ Automatic Renewal ; Negotiate 30-day notice ; This agreement automatically renews"
                   f"Summary to analyze:{final}")
         response = client.models.generate_content(
             model = "gemini-3-flash-preview",
             contents = prompt)
         
-        parsed = parse_ai(response.text)
+        final_summary, parsed = parse_ai(response.text)
 
         highlighted_pdf = highlight_points(original_pdf, parsed)
 
@@ -73,7 +74,7 @@ async def audit(file: UploadFile = File(...)):
 
         return {
             "filename": file.filename,
-            "summary": final,
+            "summary": final_summary,
             "gemini_response": parsed,
             "pdf_url": f"/download/{file_id}"
         }
