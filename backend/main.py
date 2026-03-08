@@ -10,7 +10,7 @@ from sumy.summarizers.lsa import LsaSummarizer
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.parsers.plaintext import PlaintextParser
 from fastapi import FastAPI, UploadFile, File
-from redactor import redact_text
+from util import redact_text, parse_ai
 
 load_dotenv()
 nltk.download('punkt')
@@ -37,8 +37,8 @@ async def audit(file: UploadFile = File(...)):
         fixed = ftfy.fix_text(md_text)
         redacted_text = redact_text(fixed)
         parser = PlaintextParser.from_string(redacted_text, Tokenizer("english"))
-        summarize = LsaSummarizer()
-        summary_sentences = summarize(parser.document, 50)
+        summarizer = LsaSummarizer()
+        summary_sentences = summarizer(parser.document, 50)
         final = "".join([str(sentence) for sentence in summary_sentences])
         print(final)
 
@@ -56,16 +56,16 @@ async def audit(file: UploadFile = File(...)):
             model = "gemini-3-flash-preview",
             contents = prompt)
         
+        parsed = parse_ai(response.text)
+
         return {
             "filename": file.filename,
             "summary": final,
-            "gemini_response": response.text if response.text else "error failed"
+            "gemini_response": parsed
         }
     except Exception as e:
         return {"error": str(e)}
     finally:
         if os.path.exists(path):
             os.remove(path)
-
-
 
