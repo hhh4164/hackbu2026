@@ -39,7 +39,8 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setResult(data) // an array of json
+      console.log(data)
+      setResult(data.gemini_response || []) // an array of json
     } catch (err) {
       console.error(err)
     }

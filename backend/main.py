@@ -13,6 +13,7 @@ from sumy.parsers.plaintext import PlaintextParser
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import StreamingResponse, JSONResponse
 from util import redact_text, parse_ai, highlight_points
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 nltk.download('punkt')
@@ -21,6 +22,20 @@ nltk.download('punkt_tab')
 client = genai.Client(api_key = os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI()
+
+# configure cors
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],          
+    allow_headers=["*"], 
+)
 
 pdf_dict = {}
 
