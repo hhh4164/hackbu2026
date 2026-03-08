@@ -53,7 +53,8 @@ def highlight_points(file, parse_results):
         if not quote:
             continue
         
-        for page in doc:
+        for page_num in range(len(doc)):
+            page = doc[page_num]
             rl = page.search_for(quote, quads=True)
             if rl:
                 page.add_highlight_annot(rl)

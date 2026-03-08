@@ -93,7 +93,7 @@ async def download_pdf(file_id: str):
         return StreamingResponse(
             highlighted_pdf,
             media_type="application/pdf",
-            headers={"Content-Disposition": f"inline; filename:audit_{file_id}.pdf"}
+            headers={"Content-Disposition": f'inline; filename="audit_{file_id}.pdf"'}
         )
     return JSONResponse(
         content={"message": "File not found"}
