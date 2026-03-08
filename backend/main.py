@@ -10,7 +10,7 @@ from google import genai
 from sumy.summarizers.lsa import LsaSummarizer
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.parsers.plaintext import PlaintextParser
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, JSONResponse
 from util import redact_text, parse_ai, highlight_points
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,7 +40,7 @@ app.add_middleware(
 pdf_dict = {}
 
 @app.post("/audit")
-async def audit(file: UploadFile = File(...)):
+async def audit(file: UploadFile = File(...), type: str = Form(...)):
     original_pdf = await file.read()
     await file.seek(0)
 
@@ -66,16 +66,34 @@ async def audit(file: UploadFile = File(...)):
         print(final)
 
         #gemini
-        prompt = ("You are a neutral legal auditor focusing on contract risks. Analyze the following summary "
-                  "and identify major red flags. First, generate a concise and short summary in a couple sentences of the costs and purpose of the contract. Append this summary with '~'"
-                  "Secondly, For each risk, you MUST find direct, verbatim quote from text"
-                  "to serve as evidence."
-                  "STRICT OUTPUT FORMAT:"
-                  "Problem ; Recommended Solution ; Direct Quote \n"
-                  "Separate each risk block with pipe '|'"
-                  "EXAMPLE: \n"
-                  "This is a standard agreement for consulting. It is fair on payment terms ~ Automatic Renewal ; Negotiate 30-day notice ; This agreement automatically renews"
-                  f"Summary to analyze:{final}")
+        if type == "contract":
+            prompt = ("You are a neutral legal auditor focusing on contract risks. Analyze the following summary "
+                    "and identify major red flags. First, generate a concise and short summary in a couple sentences of the costs and purpose of the contract. Append this summary with '~'"
+                    "Secondly, For each risk, you MUST find direct, verbatim quote from text"
+                    "to serve as evidence."
+                    "STRICT OUTPUT FORMAT:"
+                    "Problem ; Recommended Solution ; Direct Quote \n"
+                    "Separate each risk block with pipe '|'"
+                    "EXAMPLE: \n"
+                    "This is a standard agreement for consulting. It is fair on payment terms ~ Automatic Renewal ; Negotiate 30-day notice ; This agreement automatically renews"
+                    f"Summary to analyze:{final}")
+        else:
+            prompt = (
+                "You are a medical billing advocate and auditor. Analyze the following medical bill summary "
+                "and identify errors, overcharges, or suspicious items that patients should dispute or question. "
+                "First, generate a concise 2-sentence summary of the bill: what it is for and the total amount owed. Append this summary with '~' "
+                "Secondly, for each issue found, you MUST find a direct, verbatim quote from the text as evidence. "
+                "Look specifically for: duplicate charges, upcoded procedures, unbundled services, charges for services not rendered, "
+                "inflated costs compared to standard rates, and unclear or missing itemization. "
+                "STRICT OUTPUT FORMAT: "
+                "Problem ; Recommended Action ; Direct Quote \n"
+                "Separate each issue block with pipe '|' "
+                "EXAMPLE: \n"
+                "This is a bill for a routine ER visit totaling $4,200. Several charges appear inflated or duplicated. "
+                "~ Duplicate Lab Fee ; Request itemized bill and dispute the repeated charge ; CBC Blood Test $220, CBC Blood Test $220 "
+                "| Upcoded ER Visit Level ; Ask hospital to review visit complexity rating ; Emergency Room Level 5 - $3,200 "
+                f"Summary to analyze: {final}"
+            )
         response = client.models.generate_content(
             model = "gemini-3-flash-preview",
             contents = prompt)
