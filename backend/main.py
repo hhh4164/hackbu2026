@@ -36,14 +36,15 @@ async def audit(file: UploadFile = File(...)):
         fixed = ftfy.fix_text(md_text)
         parser = PlaintextParser.from_string(fixed, Tokenizer("english"))
         summarize = LsaSummarizer()
-        summary_sentences = summarize(parser.document, 10)
+        summary_sentences = summarize(parser.document, 50)
         final = "".join([str(sentence) for sentence in summary_sentences])
         print(final)
 
         #gemini
+        prompt = ("You are a neutral legal document auditor. In a delimited '|' format, identify 1. risk score 2. major red flags 3. solutions based on the following summary:" f"Summary:{final}")
         response = client.models.generate_content(
             model = "gemini-3-flash-preview",
-            contents = "whats the weather like today?")
+            contents = prompt)
         
         return {
             "filename": file.filename,
