@@ -33,7 +33,7 @@ const [result, setResult] = useState<{
     formData.append("type", docType)
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/audit", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/audit`, {
         method: "POST",
         body: formData
       })
