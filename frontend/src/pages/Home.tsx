@@ -123,7 +123,7 @@ const [result, setResult] = useState<{
               Download Annotated PDF
             </a>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-              {result.gemini_response.map((item, index) => (
+              {result?.gemini_response?.map((item, index) => (
                 <Card
                 key={index}
                 message={item.flag}
