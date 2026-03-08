@@ -10,6 +10,7 @@ from sumy.summarizers.lsa import LsaSummarizer
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.parsers.plaintext import PlaintextParser
 from fastapi import FastAPI, UploadFile, File
+from redactor import redact_text
 
 load_dotenv()
 nltk.download('punkt')
@@ -34,7 +35,8 @@ async def audit(file: UploadFile = File(...)):
         )
         #clean+summarize
         fixed = ftfy.fix_text(md_text)
-        parser = PlaintextParser.from_string(fixed, Tokenizer("english"))
+        redacted_text = redact_text(fixed)
+        parser = PlaintextParser.from_string(redacted_text, Tokenizer("english"))
         summarize = LsaSummarizer()
         summary_sentences = summarize(parser.document, 10)
         final = "".join([str(sentence) for sentence in summary_sentences])
