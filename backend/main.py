@@ -43,7 +43,15 @@ async def audit(file: UploadFile = File(...)):
         print(final)
 
         #gemini
-        prompt = ("You are a neutral legal document auditor. In a delimited '|' format, identify 1. risk score 2. major red flags 3. solutions based on the following summary:" f"Summary:{final}")
+        prompt = ("You are a neutral legal auditor focusing on contract risks. Analyze the following summary "
+                  "and identify major red flags. For each risk, you MUST find direct, verbatim quote from text"
+                  "to serve as evidence."
+                  "STRICT OUTPUT FORMAT:"
+                  "Problem ; Recommended Solution ; Direct Quote \n"
+                  "Separate each risk block with pipe '|'"
+                  "EXAMPLE: \n"
+                  "Automatic Renewal ; Negotiate 30-day notice ; This agreement automatically renews"
+                  f"Summary to analyze:{final}")
         response = client.models.generate_content(
             model = "gemini-3-flash-preview",
             contents = prompt)
