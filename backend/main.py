@@ -4,13 +4,15 @@ import ftfy
 import os
 import nltk
 import shutil
+import uuid
 from dotenv import load_dotenv
 from google import genai
 from sumy.summarizers.lsa import LsaSummarizer
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.parsers.plaintext import PlaintextParser
 from fastapi import FastAPI, UploadFile, File
-from util import redact_text, parse_ai
+from fastapi.responses import StreamingResponse, JSONResponse
+from util import redact_text, parse_ai, highlight_points
 
 load_dotenv()
 nltk.download('punkt')
@@ -19,8 +21,14 @@ nltk.download('punkt_tab')
 client = genai.Client(api_key = os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI()
+
+pdf_dict = {}
+
 @app.post("/audit")
 async def audit(file: UploadFile = File(...)):
+    original_pdf = await file.read()
+    await file.seek(0)
+
     path = f"temp_{file.filename}"
     with open(path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -58,10 +66,16 @@ async def audit(file: UploadFile = File(...)):
         
         parsed = parse_ai(response.text)
 
+        highlighted_pdf = highlight_points(original_pdf, parsed)
+
+        file_id = str(uuid.uuid4())
+        pdf_dict[file_id] = highlighted_pdf
+
         return {
             "filename": file.filename,
             "summary": final,
-            "gemini_response": parsed
+            "gemini_response": parsed,
+            "pdf_url": f"/download/{file_id}"
         }
     except Exception as e:
         return {"error": str(e)}
@@ -69,3 +83,17 @@ async def audit(file: UploadFile = File(...)):
         if os.path.exists(path):
             os.remove(path)
 
+@app.get("/download/{file_id}")
+async def download_pdf(file_id: str):
+    if file_id in pdf_dict:
+        highlighted_pdf = pdf_dict[file_id]
+        highlighted_pdf.seek(0)
+
+        return StreamingResponse(
+            highlighted_pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"inline; filename:audit_{file_id}.pdf"}
+        )
+    return JSONResponse(
+        content={"message": "File not found"}
+    )

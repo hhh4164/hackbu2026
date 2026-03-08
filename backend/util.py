@@ -1,5 +1,8 @@
 import re 
 import scrubadub
+import pymupdf.layout
+import pymupdf4llm
+import io
 
 def redact_text(text):
 
@@ -14,7 +17,7 @@ def redact_text(text):
         (r"(Address:\s*)([\s\S]{1,70})", r"\1[REDACTED ADDRESS]"),
         (r"(Billing Address:\s*)([\s\S]{1,70})", r"\1[REDACTED ADDRESS]"),
 
-        (r"\d{3,5}\s+[A-Za-z09\s\.]+?\s+(?:Street|St|Ave|Avenue|Road|Rd|Boulevard|Blvd|Drive|Dr|Parkway|Pwky)\.?,?\s+[A-Za-z0-9\s\.]+,?\s+[A-Z]{2}\s+\d{5}", r"[REDACTED ADDRESS]"),
+        (r"\d{1,5}\s+[A-Za-z0-9\s\.]+?\s+(?:Street|St|Ave|Avenue|Road|Rd|Boulevard|Blvd|Drive|Dr|Parkway|Pkwy)\.?,?\s+[A-Za-z0-9\s\.]+,?\s+[A-Z]{2}\s+\d{5}", "[REDACTED ADDRESS]"),
         (r"P\.?O\.?\s?Box\s\d+", "[REDACTED]")
 
     ]
@@ -36,3 +39,22 @@ def parse_ai(text):
                 "quote": parts[2]
             })
     return results
+
+def highlight_points(file, parse_results):
+    doc = pymupdf.open(stream=file, filetype="pdf")
+    for item in parse_results:
+        quote = item.get("quote")
+        if not quote:
+            continue
+        
+        for page in doc:
+            rl = page.search_for(quote, quads=True)
+            if rl:
+                page.add_highlight_annot(rl)
+    output_stream = io.BytesIO()
+    doc.save(output_stream)
+    doc.close()
+    output_stream.seek(0)
+    return output_stream
+
+
