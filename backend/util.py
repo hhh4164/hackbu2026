@@ -25,8 +25,14 @@ def redact_text(text):
     return text
 
 def parse_ai(text):
+    if "~" in text:
+        summary, audit = text.split("~", 1)
+    else:
+        summary = ""
+        audit = text
+
     results = []
-    blocks = text.strip().split("|")
+    blocks = audit.strip().split("|")
     for block in blocks:
         parts = [p.strip() for p in block.split(";")]
         if len(parts)==3:
@@ -35,4 +41,4 @@ def parse_ai(text):
                 "solution": parts[1],
                 "quote": parts[2]
             })
-    return results
+    return summary.strip(), results
