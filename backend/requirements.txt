@@ -5,3 +5,7 @@ sumy
 nltk
 google-genai
 python-dotenv
+fastapi[standard]
+python-multipart
+uvicorn
+scrubadub

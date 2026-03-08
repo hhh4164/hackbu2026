@@ -2,3 +2,4 @@
 venv/
 backend/*.pdf
 backend/.env
+__pycache__
